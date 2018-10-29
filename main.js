@@ -66,8 +66,10 @@ const app = http.createServer((req, res) => {
             title = post.title;
             let filteredId = path.parse(title).base;
             description = post.description
-            fs.writeFile(`data/${filteredId}`, description, 'utf8', (err) => {
-                res.writeHead(302, {Location: `/?id=${title}`}); //after creating a file, redirect
+            let sanitizeTitle = sanitizeHtml(title);
+            let sanitizeDescription = sanitizeHtml(description);
+            fs.writeFile(`data/${filteredId}`, sanitizeDescription, 'utf8', (err) => {
+                res.writeHead(302, {Location: `/?id=${sanitizeTitle}`}); //after creating a file, redirect
                 res.end();
             });
         });
