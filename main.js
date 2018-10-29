@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const url = require('url');
+const qs = require('querystring');
 
 function templateHTML(title, list, body){
     return `
@@ -34,13 +35,13 @@ const app = http.createServer((req, res) => {
     const queryData = url.parse(_url, true).query;
     const pathname = url.parse(_url, true).pathname;
     let title = queryData.id;
+    let description;
+    let filelist = fs.readdirSync('./data', function(error, filelist){
+        return filelist;
+    });
+    let list = templateList(filelist);
     res.writeHead(200);
     if(pathname === '/') {
-        let description;
-        let filelist = fs.readdirSync('./data', function(error, filelist){
-            return filelist;
-        });
-        let list = templateList(filelist);
         if(title === undefined) {
             title = 'Welcome';
             description = 'Hello, Node.js';
@@ -51,6 +52,33 @@ const app = http.createServer((req, res) => {
         }
         const template = templateHTML(title, list, `<h2>${title}</h2>${description}`);
         res.end(template);
+    } else if(pathname == '/create') {
+        title = 'WEB - create';
+        const template = templateHTML(title, list, `
+          <form action="http://localhost:3000/create_process" method="post">
+            <p><input type="text" name="title" placeholder="title"></p>
+            <p>
+              <textarea name="description" placeholder="description"></textarea>
+            </p>
+            <p>
+              <input type="submit">
+            </p>
+          </form>
+        `);
+        res.writeHead(200);
+        res.end(template);
+    } else if(pathname === '/create_process'){
+        let body = '';
+        req.on('data', (data) => {
+            body = body + data;
+        });
+        req.on('end', () => {
+            let post = qs.parse(body);
+            let title = post.title;
+            let description = post.description
+        });
+        res.writeHead(200);
+        res.end('success');
     } else {
         res.writeHead(404);
         res.end('Not Found');
