@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const url = require('url');
 const qs = require('querystring');
+const path = require('path');
 
 let template = require('./lib/template');
 
@@ -23,9 +24,16 @@ const app = http.createServer((req, res) => {
             description = 'Hello, Node.js';
             control = 'index';
         } else {
-            description = fs.readFileSync(`data/${title}`, 'utf8', (err, description) => {
-                return description;
-            });
+            let filteredId = path.parse(title).base;
+            description = (() => {
+                try {
+                    return fs.readFileSync(`data/${filteredId}`, 'utf8', (err, description) => {
+                        return description;
+                    });
+                } catch (err) {
+                    return ;
+                }
+            })();
             control = 'all';
         }
         const html = template.HTML(title, list, `<h2>${title}</h2>${description}`, control);
@@ -53,16 +61,24 @@ const app = http.createServer((req, res) => {
         req.on('end', () => {
             let post = qs.parse(body);
             title = post.title;
+            let filteredId = path.parse(title).base;
             description = post.description
-            fs.writeFile(`data/${title}`, description, 'utf8', (err) => {
+            fs.writeFile(`data/${filteredId}`, description, 'utf8', (err) => {
                 res.writeHead(302, {Location: `/?id=${title}`}); //after creating a file, redirect
                 res.end();
             });
         });
     } else if(pathname === '/update'){
-        description = fs.readFileSync(`data/${title}`, 'utf8', (err, description) => {
-            return description;
-        });
+        let filteredId = path.parse(title).base;
+        description = (() => {
+            try {
+                return fs.readFileSync(`data/${filteredId}`, 'utf8', (err, description) => {
+                    return description;
+                });
+            } catch (err) {
+                return ;
+            }
+        })();
         const html = template.HTML(title, list,
             `
                 <form action="/update_process" method="post">
@@ -90,7 +106,8 @@ const app = http.createServer((req, res) => {
             let id = post.id;
             title = post.title;
             description = post.description;
-            fs.rename(`data/${id}`, `data/${title}`, (error) => {
+            let filteredId = path.parse(id).base;
+            fs.rename(`data/${filteredId}`, `data/${title}`, (error) => {
                 fs.writeFile(`data/${title}`, description, 'utf8', (err) =>{
                     res.writeHead(302, {Location: `/?id=${title}`});
                     res.end();
@@ -105,7 +122,8 @@ const app = http.createServer((req, res) => {
         req.on('end', () =>{
             let post = qs.parse(body);
             let id = post.id;
-            fs.unlink(`data/${id}`, (error) => {
+            let filteredId = path.parse(id).base;
+            fs.unlink(`data/${filteredId}`, (error) => {
               res.writeHead(302, {Location: `/`});
               res.end();
             })
