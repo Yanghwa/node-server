@@ -1,9 +1,17 @@
 const http = require('http');
-const fs = require('fs');
 const url = require('url');
 const qs = require('querystring');
 const path = require('path');
 const sanitizeHtml = require('sanitize-html');
+const mysql = require('mysql');
+const db = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'root1234',
+    database: 'opentutorials'
+});
+
+db.connect();
 
 const template = require('./lib/template');
 
@@ -14,132 +22,116 @@ const app = http.createServer((req, res) => {
     let title = queryData.id;
     let description;
     let control;
-    let filelist = fs.readdirSync('./data', (error, filelist) => {
-        return filelist;
-    });
-    let list = template.list(filelist);
-    res.writeHead(200);
-    if(pathname === '/') {
-        if(title === undefined) {
-            title = 'Welcome';
-            description = 'Hello, Node.js';
-            control = 'index';
-        } else {
-            let filteredId = path.parse(title).base;
-            description = (() => {
-                try {
-                    return fs.readFileSync(`data/${filteredId}`, 'utf8', (err, description) => {
-                        return description;
-                    });
-                } catch (err) {
-                    return ;
-                }
-            })();
-            control = 'all';
-        }
-        let sanitizeTitle = sanitizeHtml(title);
-        let sanitizeDescription = sanitizeHtml(description);
-        const html = template.HTML(sanitizeTitle, list, `<h2>${sanitizeTitle}</h2>${sanitizeDescription}`, control);
-        res.end(html);
-    } else if(pathname == '/create') {
-        title = 'WEB - create';
-        const html = template.HTML(title, list, `
-          <form action="http://localhost:3000/create_process" method="post">
-            <p><input type="text" name="title" placeholder="title"></p>
-            <p>
-              <textarea name="description" placeholder="description"></textarea>
-            </p>
-            <p>
-              <input type="submit">
-            </p>
-          </form>
-        `);
-        res.writeHead(200);
-        res.end(html);
-    } else if(pathname === '/create_process'){
-        let body = '';
-        req.on('data', (data) => {
-            body = body + data;
-        });
-        req.on('end', () => {
-            let post = qs.parse(body);
-            title = post.title;
-            let filteredId = path.parse(title).base;
-            description = post.description
-            let sanitizeTitle = sanitizeHtml(title);
-            let sanitizeDescription = sanitizeHtml(description);
-            fs.writeFile(`data/${filteredId}`, sanitizeDescription, 'utf8', (err) => {
-                res.writeHead(302, {Location: `/?id=${sanitizeTitle}`}); //after creating a file, redirect
-                res.end();
-            });
-        });
-    } else if(pathname === '/update'){
-        let filteredId = path.parse(title).base;
-        description = (() => {
-            try {
-                return fs.readFileSync(`data/${filteredId}`, 'utf8', (err, description) => {
-                    return description;
+    db.query(`SELECT * FROM topic`, (err, topics) => {
+        if(err) throw err;
+        let list = template.list(topics);
+        if(pathname === '/') {
+            if(title === undefined) {
+                title = 'Welcome';
+                description = 'Hello, Node.js';
+                control = template.control('','index');
+                let sanitizeTitle = sanitizeHtml(title);
+                let sanitizeDescription = sanitizeHtml(description);
+                const html = template.HTML(title, list, `<h2>${sanitizeTitle}</h2>${sanitizeDescription}`, control);
+                res.end(html);
+            } else {
+                db.query(`SELECT * FROM topic LEFT JOIN author ON topic.author_id=author.id WHERE topic.id=?`,[queryData.id], (error2, topic) => {
+                    if(error2) throw error2;
+                    control = template.control(topic[0].id,'all');
+                    let sanitizeTitle = sanitizeHtml(topic[0].title);
+                    let sanitizeDescription = sanitizeHtml(topic[0].description);
+                    const html = template.HTML(topic[0].id, list, 
+                        `
+                            <h2>${sanitizeTitle}</h2>${sanitizeDescription}
+                            <p>by ${topic[0].name}</p>
+                        `, control);
+                    res.end(html);
                 });
-            } catch (err) {
-                return ;
             }
-        })();
-        let sanitizeTitle = sanitizeHtml(title);
-        let sanitizeDescription = sanitizeHtml(description);
-        const html = template.HTML(title, list,
-            `
-                <form action="/update_process" method="post">
-                <input type="hidden" name="id" value="${sanitizeTitle}">
-                <p><input type="text" name="title" placeholder="title" value="${sanitizeTitle}"></p>
+        } else if(pathname == '/create') {
+            title = 'WEB - create';
+            const html = template.HTML(title, list, `
+            <form action="http://localhost:3000/create_process" method="post">
+                <p><input type="text" name="title" placeholder="title"></p>
                 <p>
-                    <textarea name="description" placeholder="description">${sanitizeDescription}</textarea>
+                <textarea name="description" placeholder="description"></textarea>
                 </p>
                 <p>
-                    <input type="submit">
+                <input type="submit">
                 </p>
-                </form>
-            `,
-            'all'
-        );
-        res.writeHead(200);
-        res.end(html);
-    } else if(pathname === '/update_process'){
-        let body = '';
-        req.on('data', (data) => {
-            body = body + data;
-        });
-        req.on('end', () => {
-            let post = qs.parse(body);
-            let id = post.id;
-            title = post.title;
-            let sanitizeTitle = sanitizeHtml(title);
-            description = post.description;
-            let filteredId = path.parse(id).base;
-            fs.rename(`data/${filteredId}`, `data/${sanitizeTitle}`, (error) => {
-                fs.writeFile(`data/${sanitizeTitle}`, description, 'utf8', (err) =>{
-                    res.writeHead(302, {Location: `/?id=${sanitizeTitle}`});
+            </form>
+            `);
+            res.writeHead(200);
+            res.end(html);
+        } else if(pathname === '/create_process'){
+            let body = '';
+            req.on('data', (data) => {
+                body = body + data;
+            });
+            req.on('end', () => {
+                let post = qs.parse(body);
+                db.query(`INSERT INTO topic (title, description, created, author_id) VALUES(?, ?, NOW(), ?)`, [post.title, post.description, 1], 
+                    (err, result) => {
+                        if(err) throw err;
+                        res.writeHead(302, {Location: `/?id=${result.insertId}`});
+                        res.end();
+                });
+            });
+        } else if(pathname === '/update'){
+            db.query(`SELECT * FROM topic WHERE id=?`,[queryData.id], (error2, topic) => {
+                if(error2) throw error2;
+                control = template.control(topic[0].id,'all');
+                let sanitizeTitle = sanitizeHtml(topic[0].title);
+                let sanitizeDescription = sanitizeHtml(topic[0].description);
+                const html = template.HTML(queryData.id, list,
+                    `
+                        <form action="/update_process" method="post">
+                        <input type="hidden" name="id" value="${topic[0].id}">
+                        <p><input type="text" name="title" placeholder="title" value="${sanitizeTitle}"></p>
+                        <p>
+                            <textarea name="description" placeholder="description">${sanitizeDescription}</textarea>
+                        </p>
+                        <p>
+                            <input type="submit">
+                        </p>
+                        </form>
+                    `,
+                    control
+                );
+                res.writeHead(200);
+                res.end(html);
+            });
+        } else if(pathname === '/update_process'){
+            let body = '';
+            req.on('data', (data) => {
+                body = body + data;
+            });
+            req.on('end', () => {
+                let post = qs.parse(body);
+                db.query('UPDATE topic SET title=?, description=?, author_id=1 WHERE id=?', [post.title, post.description, post.id], 
+                    (error, result) => {
+                        res.writeHead(302, {Location: `/?id=${post.id}`});
+                        res.end();
+                });
+            });
+        } else if(pathname === '/delete_process'){
+            let body = '';
+            req.on('data', (data) =>{
+                body = body + data;
+            });
+            req.on('end', () =>{
+                let post = qs.parse(body);
+                db.query('DELETE FROM topic WHERE id = ?', [post.id], (error, result) => {
+                    if(error) throw error;
+                    res.writeHead(302, {Location: `/`});
                     res.end();
                 })
             });
-        });
-    } else if(pathname === '/delete_process'){
-        let body = '';
-        req.on('data', (data) =>{
-            body = body + data;
-        });
-        req.on('end', () =>{
-            let post = qs.parse(body);
-            let id = post.id;
-            let filteredId = path.parse(id).base;
-            fs.unlink(`data/${filteredId}`, (error) => {
-              res.writeHead(302, {Location: `/`});
-              res.end();
-            })
-        });
-    } else {
-        res.writeHead(404);
-        res.end('Not Found');
-    }
+        } else {
+            res.writeHead(404);
+            res.end('Not Found');
+        }
+    });
 });
 
 app.listen(3000);
