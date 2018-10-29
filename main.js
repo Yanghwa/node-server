@@ -3,58 +3,60 @@ const fs = require('fs');
 const url = require('url');
 const qs = require('querystring');
 
-templateHTML = (title, list, body, control) => {
-    let editMenu;
-    switch (control) {
-        case 'all':
-            editMenu =`<a href="/create">create</a> <a href="/update?id=${title}">update</a>
-                <form action="delete_process" method="post">
-                    <input type="hidden" name="id" value="${title}">
-                    <input type="submit" value="delete">
-                </form>
-            `;
-            break;
-        case 'update':
-            editMenu =`<a href="/create">create</a> 
-                <form action="delete_process" method="post">
-                    <input type="hidden" name="id" value="${title}">
-                    <input type="submit" value="delete">
-                </form>
-            `;
-            break;
-        case 'index':
-            editMenu =`<a href="/create">create</a> `;
-            break;
-        default:
-            editMenu = '';
-            break;
+let template = {
+    HTML: (title, list, body, control) => {
+        let editMenu;
+        switch (control) {
+            case 'all':
+                editMenu =`<a href="/create">create</a> <a href="/update?id=${title}">update</a>
+                    <form action="delete_process" method="post">
+                        <input type="hidden" name="id" value="${title}">
+                        <input type="submit" value="delete">
+                    </form>
+                `;
+                break;
+            case 'update':
+                editMenu =`<a href="/create">create</a> 
+                    <form action="delete_process" method="post">
+                        <input type="hidden" name="id" value="${title}">
+                        <input type="submit" value="delete">
+                    </form>
+                `;
+                break;
+            case 'index':
+                editMenu =`<a href="/create">create</a> `;
+                break;
+            default:
+                editMenu = '';
+                break;
+        }
+        
+        return `
+            <!doctype html>
+            <html>
+            <head>
+                <title>WEB1 - ${title}</title>
+                <meta charset="utf-8">
+            </head>
+            <body>
+                <h1><a href="/">WEB</a></h1>
+                ${list}
+                ${editMenu}
+                ${body}
+            </body>
+            </html>
+        `;
+    },
+    list: (filelist) => {
+        let list = '<ul>';
+        let i = 0;
+        while(i < filelist.length){
+            list = list + `<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
+            i = i + 1;
+        }
+        list = list+'</ul>';
+        return list;
     }
-    
-    return `
-        <!doctype html>
-        <html>
-        <head>
-            <title>WEB1 - ${title}</title>
-            <meta charset="utf-8">
-        </head>
-        <body>
-            <h1><a href="/">WEB</a></h1>
-            ${list}
-            ${editMenu}
-            ${body}
-        </body>
-        </html>
-    `;
-}
-templateList = (filelist) => {
-    let list = '<ul>';
-    let i = 0;
-    while(i < filelist.length){
-        list = list + `<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
-        i = i + 1;
-    }
-    list = list+'</ul>';
-    return list;
 }
 
 const app = http.createServer((req, res) => {
@@ -67,7 +69,7 @@ const app = http.createServer((req, res) => {
     let filelist = fs.readdirSync('./data', (error, filelist) => {
         return filelist;
     });
-    let list = templateList(filelist);
+    let list = template.list(filelist);
     res.writeHead(200);
     if(pathname === '/') {
         if(title === undefined) {
@@ -80,11 +82,11 @@ const app = http.createServer((req, res) => {
             });
             control = 'all';
         }
-        const template = templateHTML(title, list, `<h2>${title}</h2>${description}`, control);
-        res.end(template);
+        const html = template.HTML(title, list, `<h2>${title}</h2>${description}`, control);
+        res.end(html);
     } else if(pathname == '/create') {
         title = 'WEB - create';
-        const template = templateHTML(title, list, `
+        const html = template.HTML(title, list, `
           <form action="http://localhost:3000/create_process" method="post">
             <p><input type="text" name="title" placeholder="title"></p>
             <p>
@@ -96,7 +98,7 @@ const app = http.createServer((req, res) => {
           </form>
         `);
         res.writeHead(200);
-        res.end(template);
+        res.end(html);
     } else if(pathname === '/create_process'){
         let body = '';
         req.on('data', (data) => {
@@ -115,7 +117,7 @@ const app = http.createServer((req, res) => {
         description = fs.readFileSync(`data/${title}`, 'utf8', (err, description) => {
             return description;
         });
-        const template = templateHTML(title, list,
+        const html = template.HTML(title, list,
             `
                 <form action="/update_process" method="post">
                 <input type="hidden" name="id" value="${title}">
@@ -131,7 +133,7 @@ const app = http.createServer((req, res) => {
             'all'
         );
         res.writeHead(200);
-        res.end(template);
+        res.end(html);
     } else if(pathname === '/update_process'){
         let body = '';
         req.on('data', (data) => {
