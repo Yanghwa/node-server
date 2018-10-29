@@ -3,8 +3,9 @@ const fs = require('fs');
 const url = require('url');
 const qs = require('querystring');
 const path = require('path');
+const sanitizeHtml = require('sanitize-html');
 
-let template = require('./lib/template');
+const template = require('./lib/template');
 
 const app = http.createServer((req, res) => {
     const _url = req.url;
@@ -36,7 +37,9 @@ const app = http.createServer((req, res) => {
             })();
             control = 'all';
         }
-        const html = template.HTML(title, list, `<h2>${title}</h2>${description}`, control);
+        let sanitizeTitle = sanitizeHtml(title);
+        let sanitizeDescription = sanitizeHtml(description);
+        const html = template.HTML(sanitizeTitle, list, `<h2>${sanitizeTitle}</h2>${sanitizeDescription}`, control);
         res.end(html);
     } else if(pathname == '/create') {
         title = 'WEB - create';
@@ -79,13 +82,15 @@ const app = http.createServer((req, res) => {
                 return ;
             }
         })();
+        let sanitizeTitle = sanitizeHtml(title);
+        let sanitizeDescription = sanitizeHtml(description);
         const html = template.HTML(title, list,
             `
                 <form action="/update_process" method="post">
-                <input type="hidden" name="id" value="${title}">
-                <p><input type="text" name="title" placeholder="title" value="${title}"></p>
+                <input type="hidden" name="id" value="${sanitizeTitle}">
+                <p><input type="text" name="title" placeholder="title" value="${sanitizeTitle}"></p>
                 <p>
-                    <textarea name="description" placeholder="description">${description}</textarea>
+                    <textarea name="description" placeholder="description">${sanitizeDescription}</textarea>
                 </p>
                 <p>
                     <input type="submit">
@@ -105,11 +110,12 @@ const app = http.createServer((req, res) => {
             let post = qs.parse(body);
             let id = post.id;
             title = post.title;
+            let sanitizeTitle = sanitizeHtml(title);
             description = post.description;
             let filteredId = path.parse(id).base;
-            fs.rename(`data/${filteredId}`, `data/${title}`, (error) => {
-                fs.writeFile(`data/${title}`, description, 'utf8', (err) =>{
-                    res.writeHead(302, {Location: `/?id=${title}`});
+            fs.rename(`data/${filteredId}`, `data/${sanitizeTitle}`, (error) => {
+                fs.writeFile(`data/${sanitizeTitle}`, description, 'utf8', (err) =>{
+                    res.writeHead(302, {Location: `/?id=${sanitizeTitle}`});
                     res.end();
                 })
             });
