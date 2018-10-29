@@ -3,14 +3,24 @@ const fs = require('fs');
 const url = require('url');
 const qs = require('querystring');
 
-function templateHTML(title, list, body, control){
+templateHTML = (title, list, body, control) => {
     let editMenu;
     switch (control) {
         case 'all':
-            editMenu =`<a href="/create">create</a> <a href="/update?id=${title}">update</a>`;
+            editMenu =`<a href="/create">create</a> <a href="/update?id=${title}">update</a>
+                <form action="delete_process" method="post">
+                    <input type="hidden" name="id" value="${title}">
+                    <input type="submit" value="delete">
+                </form>
+            `;
             break;
         case 'update':
-            editMenu =`<a href="/create">create</a> `;
+            editMenu =`<a href="/create">create</a> 
+                <form action="delete_process" method="post">
+                    <input type="hidden" name="id" value="${title}">
+                    <input type="submit" value="delete">
+                </form>
+            `;
             break;
         case 'index':
             editMenu =`<a href="/create">create</a> `;
@@ -36,7 +46,7 @@ function templateHTML(title, list, body, control){
         </html>
     `;
 }
-function templateList(filelist){
+templateList = (filelist) => {
     let list = '<ul>';
     let i = 0;
     while(i < filelist.length){
@@ -54,7 +64,7 @@ const app = http.createServer((req, res) => {
     let title = queryData.id;
     let description;
     let control;
-    let filelist = fs.readdirSync('./data', function(error, filelist){
+    let filelist = fs.readdirSync('./data', (error, filelist) => {
         return filelist;
     });
     let list = templateList(filelist);
@@ -65,7 +75,7 @@ const app = http.createServer((req, res) => {
             description = 'Hello, Node.js';
             control = 'index';
         } else {
-            description = fs.readFileSync(`data/${title}`, 'utf8', function(err, description){
+            description = fs.readFileSync(`data/${title}`, 'utf8', (err, description) => {
                 return description;
             });
             control = 'all';
@@ -102,7 +112,7 @@ const app = http.createServer((req, res) => {
             });
         });
     } else if(pathname === '/update'){
-        description = fs.readFileSync(`data/${title}`, 'utf8', function(err, description){
+        description = fs.readFileSync(`data/${title}`, 'utf8', (err, description) => {
             return description;
         });
         const template = templateHTML(title, list,
@@ -132,12 +142,25 @@ const app = http.createServer((req, res) => {
             let id = post.id;
             title = post.title;
             description = post.description;
-            fs.rename(`data/${id}`, `data/${title}`, function(error){
-                fs.writeFile(`data/${title}`, description, 'utf8', function(err){
+            fs.rename(`data/${id}`, `data/${title}`, (error) => {
+                fs.writeFile(`data/${title}`, description, 'utf8', (err) =>{
                     res.writeHead(302, {Location: `/?id=${title}`});
                     res.end();
                 })
             });
+        });
+    } else if(pathname === '/delete_process'){
+        let body = '';
+        req.on('data', (data) =>{
+            body = body + data;
+        });
+        req.on('end', () =>{
+            let post = qs.parse(body);
+            let id = post.id;
+            fs.unlink(`data/${id}`, (error) => {
+              res.writeHead(302, {Location: `/`});
+              res.end();
+            })
         });
     } else {
         res.writeHead(404);
