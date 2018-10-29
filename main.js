@@ -14,6 +14,7 @@ function templateHTML(title, list, body){
         <body>
         <h1><a href="/">WEB</a></h1>
         ${list}
+        <a href="/create">create</a>
         ${body}
         </body>
         </html>
@@ -74,11 +75,13 @@ const app = http.createServer((req, res) => {
         });
         req.on('end', () => {
             let post = qs.parse(body);
-            let title = post.title;
-            let description = post.description
+            title = post.title;
+            description = post.description
+            fs.writeFile(`data/${title}`, description, 'utf8', (err) => {
+                res.writeHead(302, {Location: `/?id=${title}`}); //after creating a file, redirect
+                res.end();
+            });
         });
-        res.writeHead(200);
-        res.end('success');
     } else {
         res.writeHead(404);
         res.end('Not Found');
