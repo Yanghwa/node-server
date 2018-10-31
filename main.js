@@ -37,7 +37,8 @@ const app = http.createServer((req, res) => {
                     const html = template.HTML(title, list, `<h2>${sanitizeTitle}</h2>${sanitizeDescription}`, control);
                     res.end(html);
                 } else {
-                    db.query(`SELECT * FROM topic LEFT JOIN author ON topic.author_id=author.id WHERE topic.id=?`,[queryData.id], (error2, topic) => {
+                    db.query(`SELECT topic.id, topic.title, topic.description, topic.created, topic.author_id, author.name, author.profile
+                        FROM topic LEFT JOIN author ON topic.author_id=author.id WHERE topic.id=?`,[queryData.id], (error2, topic) => {
                         if(error2) throw error2;
                         control = template.control(topic[0].id,'all');
                         let sanitizeTitle = sanitizeHtml(topic[0].title);
@@ -85,7 +86,7 @@ const app = http.createServer((req, res) => {
             } else if(pathname === '/update'){
                 db.query(`SELECT * FROM topic WHERE id=?`,[queryData.id], (error2, topic) => {
                     if(error2) throw error2;
-                    control = template.control(topic[0].id,'all');
+                    control = template.control(topic[0].id,'update');
                     let sanitizeTitle = sanitizeHtml(topic[0].title);
                     let sanitizeDescription = sanitizeHtml(topic[0].description);
                     const html = template.HTML(queryData.id, list,
@@ -95,6 +96,9 @@ const app = http.createServer((req, res) => {
                             <p><input type="text" name="title" placeholder="title" value="${sanitizeTitle}"></p>
                             <p>
                                 <textarea name="description" placeholder="description">${sanitizeDescription}</textarea>
+                            </p>
+                            <p>
+                                ${template.authorSelect(authors, topic[0].author_id)}
                             </p>
                             <p>
                                 <input type="submit">
@@ -113,7 +117,7 @@ const app = http.createServer((req, res) => {
                 });
                 req.on('end', () => {
                     let post = qs.parse(body);
-                    db.query('UPDATE topic SET title=?, description=?, author_id=1 WHERE id=?', [post.title, post.description, post.id], 
+                    db.query('UPDATE topic SET title=?, description=?, author_id=? WHERE id=?', [post.title, post.description, post.author, post.id], 
                         (error, result) => {
                             res.writeHead(302, {Location: `/?id=${post.id}`});
                             res.end();
