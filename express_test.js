@@ -2,7 +2,11 @@ const express = require('express');
 const app = express();
 
 app.get('/', (req, res) => {
-    res.send('Hell low world');
+    res.send('/');
+});
+
+app.get('/page', (req, res) => { 
+    res.send('/page');
 });
 
 app.listen(3000, () => {
