@@ -10,12 +10,16 @@ app.get('/', (req, res) => {
     topic.home(req, res);
 });
 
-app.get('/page/:id', (req, res) => {
+app.get('/page/:pageId', (req, res) => {
     topic.page(req, res);
 });
 
 app.get('/create', (req, res) => {
     topic.create(req, res);
+});
+
+app.post('/create', (req, res) => {
+    topic.create_process(req, res);
 });
 
 // const app = http.createServer((req, res) => {
