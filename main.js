@@ -22,6 +22,14 @@ app.post('/create', (req, res) => {
     topic.create_process(req, res);
 });
 
+app.get('/update/:pageId', (req, res) => {
+    topic.update(req, res);
+});
+
+app.post('/update', (req, res) => {
+    topic.update_process(req, res);
+});
+
 // const app = http.createServer((req, res) => {
 //     const _url = req.url;
 //     const queryData = url.parse(_url, true).query;
