@@ -33,6 +33,8 @@ const app = http.createServer((req, res) => {
         author.update(req, res);
     } else if(pathname === '/authors/update_process') {
         author.update_process(req, res);
+    } else if(pathname === '/authors/delete_process'){
+        author.delete_process(req, res);
     } else {
         res.writeHead(404);
         res.end('Not Found');
