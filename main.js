@@ -7,12 +7,15 @@ const topic = require('./lib/topic');
 const author = require('./lib/author');
 
 app.get('/', (req, res) => {
-    let title;
-    if(title === undefined) {
-        topic.home(req, res);
-    } else {
-        topic.page(req, res);
-    }
+    topic.home(req, res);
+});
+
+app.get('/page/:id', (req, res) => {
+    topic.page(req, res);
+});
+
+app.get('/create', (req, res) => {
+    topic.create(req, res);
 });
 
 // const app = http.createServer((req, res) => {
