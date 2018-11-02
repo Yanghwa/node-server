@@ -1,10 +1,11 @@
-const http = require('http');
-const url = require('url');
 const express = require('express');
+const bodyParser = require('body-parser');
 const app = express();
 
 const topic = require('./lib/topic');
 const author = require('./lib/author');
+
+app.use(bodyParser.urlencoded({ extended: false }));
 
 app.get('/', (req, res) => {
     topic.home(req, res);
