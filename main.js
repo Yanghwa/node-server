@@ -30,6 +30,10 @@ app.post('/update', (req, res) => {
     topic.update_process(req, res);
 });
 
+app.post('/delete', (req, res) => {
+    topic.delete_process(req, res);
+});
+
 // const app = http.createServer((req, res) => {
 //     const _url = req.url;
 //     const queryData = url.parse(_url, true).query;
