@@ -1,10 +1,10 @@
 const http = require('http');
 const url = require('url');
 const qs = require('querystring');
-const sanitizeHtml = require('sanitize-html');
 
 const db = require('./lib/db');
 const template = require('./lib/template');
+const topic = require('./lib/topic');
 
 const app = http.createServer((req, res) => {
     const _url = req.url;
@@ -20,13 +20,10 @@ const app = http.createServer((req, res) => {
             let list = template.list(topics);
             if(pathname === '/') {
                 if(title === undefined) {
+                    control = template.control('','index');
+                    topic.home(req, res, control);
                     title = 'Welcome';
                     description = 'Hello, Node.js';
-                    control = template.control('','index');
-                    let sanitizeTitle = sanitizeHtml(title);
-                    let sanitizeDescription = sanitizeHtml(description);
-                    const html = template.HTML(title, list, `<h2>${sanitizeTitle}</h2>${sanitizeDescription}`, control);
-                    res.end(html);
                 } else {
                     db.query(`SELECT topic.id, topic.title, topic.description, topic.created, topic.author_id, author.name, author.profile
                         FROM topic LEFT JOIN author ON topic.author_id=author.id WHERE topic.id=?`,[queryData.id], (error2, topic) => {
