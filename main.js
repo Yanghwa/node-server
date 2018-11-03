@@ -25,6 +25,9 @@ app.use(session({
     store: new FileStore()
 }));
 
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+
 //custom middleware
 app.get('*', middleware.list);
 app.get(['/topics/create', '/topics/update/:topicId', '/authors', '/authors/update/:authorId'], middleware.authors);
