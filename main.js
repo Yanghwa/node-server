@@ -5,6 +5,7 @@ const helmet = require('helmet');
 
 const middleware = require('./lib/middleware');
 
+const authRouter = require('./routes/auth');
 const topicRouter = require('./routes/topics');
 const authorRouter = require('./routes/authors');
 const indexRouter = require('./routes/index');
@@ -20,6 +21,7 @@ app.use(compression());
 app.get('*', middleware.list);
 app.get(['/topics/create', '/topics/update/:topicId', '/authors', '/authors/update/:authorId'], middleware.authors);
 
+app.use('/auth', authRouter);
 app.use('/topics', topicRouter);
 app.use('/authors', authorRouter);
 app.use('/', indexRouter);
