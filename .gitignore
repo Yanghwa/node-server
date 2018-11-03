@@ -1,4 +1,6 @@
 node_modules
+sessions
+
 yarn.lock
 package-lock.json
 lib/db.js

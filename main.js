@@ -2,6 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const compression = require('compression');
 const helmet = require('helmet');
+const session = require('express-session');
+const FileStore = require('session-file-store')(session);
 
 const middleware = require('./lib/middleware');
 
@@ -12,10 +14,16 @@ const indexRouter = require('./routes/index');
 
 const app = express();
 
-// app.use(helmet());
+app.use(helmet.dnsPrefetchControl());
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(compression());
+app.use(session({
+    secret: 'asadlfkj!@#!@#dfgasdg',
+    resave: false,
+    saveUninitialized: true,
+    store: new FileStore()
+}));
 
 //custom middleware
 app.get('*', middleware.list);
