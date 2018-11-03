@@ -12,4 +12,8 @@ router.post('/login', (req, res) => {
     auth.login_process(req, res);
 });
 
+router.get('/logout', (req, res) => {
+    auth.logout(req, res);
+});
+
 module.exports = router;
