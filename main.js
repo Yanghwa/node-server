@@ -12,7 +12,7 @@ app.use(compression());
 
 //custom middleware
 app.get('*', middleware.list);
-app.get(['/create', '/update/:pageId'], middleware.authors);
+app.get(['/create', '/update/:pageId', '/authors', '/authors/update/:authorId'], middleware.authors);
 
 app.get('/', (req, res) => {
     topic.home(req, res);
@@ -40,6 +40,30 @@ app.post('/update', (req, res) => {
 
 app.post('/delete', (req, res) => {
     topic.delete_process(req, res);
+});
+
+app.get('/authors', (req, res) => {
+    author.home(req, res);
+});
+
+app.get('/authors/create', (req, res) => {
+    author.create(req, res);
+});
+
+app.post('/authors/create', (req, res) => {
+    author.create_process(req, res);
+});
+
+app.get('/authors/update/:authorId', (req, res) => {
+    author.update(req, res);
+});
+
+app.post('/authors/update', (req, res) => {
+    author.update_process(req, res);
+});
+
+app.post('/authors/delete', (req, res) => {
+    author.delete_process(req, res);
 });
 
 app.listen(3000);
