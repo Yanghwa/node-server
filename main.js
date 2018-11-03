@@ -7,6 +7,7 @@ const middleware = require('./lib/middleware');
 const topic = require('./lib/topic');
 const author = require('./lib/author');
 
+app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(compression());
 
