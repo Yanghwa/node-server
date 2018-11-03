@@ -3,11 +3,16 @@ const bodyParser = require('body-parser');
 const compression = require('compression');
 const app = express();
 
+const middleware = require('./lib/middleware');
 const topic = require('./lib/topic');
 const author = require('./lib/author');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(compression());
+
+//custom middleware
+app.get('*', middleware.list);
+app.get(['/create', '/update/:pageId'], middleware.authors);
 
 app.get('/', (req, res) => {
     topic.home(req, res);
