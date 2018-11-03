@@ -1,11 +1,13 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const compression = require('compression');
 const app = express();
 
 const topic = require('./lib/topic');
 const author = require('./lib/author');
 
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(compression());
 
 app.get('/', (req, res) => {
     topic.home(req, res);
