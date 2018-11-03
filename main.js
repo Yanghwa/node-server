@@ -13,34 +13,34 @@ app.use(compression());
 
 //custom middleware
 app.get('*', middleware.list);
-app.get(['/create', '/update/:pageId', '/authors', '/authors/update/:authorId'], middleware.authors);
+app.get(['/topics/create', '/topics/update/:topicId', '/authors', '/authors/update/:authorId'], middleware.authors);
 
 app.get('/', (req, res) => {
     topic.home(req, res);
 });
 
-app.get('/page/:pageId', (req, res) => {
-    topic.page(req, res);
-});
-
-app.get('/create', (req, res) => {
+app.get('/topics/create', (req, res) => {
     topic.create(req, res);
 });
 
-app.post('/create', (req, res) => {
+app.post('/topics/create', (req, res) => {
     topic.create_process(req, res);
 });
 
-app.get('/update/:pageId', (req, res) => {
+app.get('/topics/update/:topicId', (req, res) => {
     topic.update(req, res);
 });
 
-app.post('/update', (req, res) => {
+app.post('/topics/update', (req, res) => {
     topic.update_process(req, res);
 });
 
-app.post('/delete', (req, res) => {
+app.post('/topics/delete', (req, res) => {
     topic.delete_process(req, res);
+});
+
+app.get('/topics/:topicId', (req, res) => {
+    topic.detail(req, res);
 });
 
 app.get('/authors', (req, res) => {
