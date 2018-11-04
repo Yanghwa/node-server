@@ -63,7 +63,9 @@ passport.use(new LocalStrategy({
 }, (username, password, done) => {
     if(username === tempAuthData.email) {
         if(password === tempAuthData.password) {
-            return done(null, tempAuthData);
+            return done(null, tempAuthData, {
+                message: 'Welcome.'
+            });
         } else {
             return done(null, false, {
                 message: 'Incorrect password.'
@@ -71,14 +73,16 @@ passport.use(new LocalStrategy({
         }
     } else {
         return done(null, false, {
-            message: 'Incorrect username/'
+            message: 'Incorrect username.'
         });
     }
 }));
 app.post('/auth/login',
     passport.authenticate('local', {
         successRedirect: '/',
-        failureRedirect: '/auth/login'
+        failureRedirect: '/auth/login',
+        failureFlash:true,
+        successFlash:true
     }));
 
 //custom middleware
