@@ -12,9 +12,13 @@ router.get('/login', (req, res) => {
 //     auth.login_process(req, res);
 // });
 
-router.get('/register', function (req, res) {
+router.get('/register', (req, res) => {
     auth.register(req, res);
-  });
+});
+
+router.post('/register', (req, res) => {
+    auth.register_process(req, res);
+});
 
 router.get('/logout', (req, res) => {
     auth.logout(req, res);
